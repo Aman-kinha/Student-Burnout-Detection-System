@@ -1,0 +1,51 @@
+@echo off
+title Burnout Detection - Frontend
+echo ================================================
+echo   AI Burnout Detection System - Frontend
+echo ================================================
+echo.
+
+REM Check Node.js is installed
+node --version >nul 2>&1
+if %errorlevel% neq 0 (
+    echo ERROR: Node.js is not installed!
+    echo Please download and install it from: https://nodejs.org/
+    echo Choose the LTS version.
+    pause
+    exit /b 1
+)
+
+echo Node.js found:
+node --version
+echo npm version:
+npm --version
+echo.
+
+cd /d "%~dp0frontend"
+echo Working directory: %cd%
+echo.
+
+echo [1/2] Installing packages (first time takes 2-3 minutes)...
+echo       Please wait, do not close this window...
+echo.
+npm install --legacy-peer-deps
+if %errorlevel% neq 0 (
+    echo.
+    echo ERROR: npm install failed!
+    echo Try running this command manually:
+    echo   cd "%~dp0frontend"
+    echo   npm install --legacy-peer-deps
+    pause
+    exit /b 1
+)
+
+echo.
+echo [2/2] Starting React app...
+echo.
+echo   Open your browser and go to:
+echo   http://localhost:3000
+echo.
+echo   Keep this window open. Press Ctrl+C to stop.
+echo.
+npm run dev -- --host
+pause

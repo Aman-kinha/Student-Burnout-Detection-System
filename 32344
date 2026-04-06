@@ -1,0 +1,14 @@
+@echo off
+title Burnout Detection - No Install Required
+echo ================================================
+echo   Opening Burnout App (No npm needed!)
+echo ================================================
+echo.
+echo Opening in your default browser...
+start "" "%~dp0frontend\standalone.html"
+echo.
+echo App opened! If browser did not open automatically,
+echo manually open this file in your browser:
+echo   %~dp0frontend\standalone.html
+echo.
+pause

@@ -1,0 +1,166 @@
+# BurnoutAI — Android App Setup Guide
+
+## What the Android app does
+
+| Feature | How it works |
+|---|---|
+| **App Usage Tracking** | Reads which apps you used today using Android UsageStatsManager |
+| **Study vs Entertainment** | Classifies apps (Google Classroom, Duolingo = Study / Instagram, YouTube = Entertainment) |
+| **Step Counter** | Uses phone's built-in step counter sensor for physical activity data |
+| **Sleep Estimation** | Asks you each day for sleep hours (slider in Check-In) |
+| **Sends to Backend** | All data is sent via HTTP to the Python backend running on your PC |
+| **Shows Results** | Live burnout score, risk factors, and recommendations on the phone |
+
+---
+
+## System Architecture
+
+```
+Android Phone                Desktop PC
+─────────────────────        ──────────────────────────────
+📱 App Usage Stats  ─┐       🖥️ START_BACKEND.bat
+🏃 Step Counter     ─┼──────► FastAPI (localhost:8000)
+😴 Sleep (slider)   ─┤           │
+📋 Questionnaire    ─┘           ▼
+                            XGBoost ML Model
+                                 │
+                    ┌────────────┴─────────────┐
+                    ▼                          ▼
+              📱 Android App            🌐 Website
+              (shows result)        (standalone.html)
+```
+
+---
+
+## Step 1 — Get the Desktop IP
+
+On your Windows PC:
+1. Press **Win + R** → type `cmd` → press Enter
+2. Type: `ipconfig`
+3. Find **IPv4 Address** (looks like `192.168.1.105`)
+4. Write it down — you'll enter this in the Android app
+
+---
+
+## Step 2 — Start the Backend
+
+Double-click **START_BACKEND.bat** on your PC.
+Wait until you see: `Uvicorn running on http://0.0.0.0:8000`
+
+---
+
+## Step 3 — Build and Install the Android App
+
+### Option A: Using Android Studio (Recommended)
+1. Download and install **Android Studio** from https://developer.android.com/studio
+2. Open Android Studio → **Open** → select the `android/` folder in this project
+3. Wait for Gradle sync to finish (2-3 minutes)
+4. Connect your Android phone via USB (enable USB debugging in Developer Options)
+5. Click the **▶ Run** button
+
+### Option B: Using Command Line
+```
+cd android
+./gradlew assembleDebug
+adb install app/build/outputs/apk/debug/app-debug.apk
+```
+
+### Enable Developer Options on Android
+1. Settings → About Phone
+2. Tap "Build Number" **7 times**
+3. Settings → Developer Options → Enable **USB Debugging**
+
+---
+
+## Step 4 — First Launch Setup
+
+1. Open **BurnoutAI** on your phone
+2. Enter your PC's IP address (from Step 1)
+3. Tap **Test Connection** — should show ✅ Connected
+4. Tap **Grant App Usage Access** → find BurnoutAI → enable it
+5. Tap **Save & Continue**
+
+---
+
+## Step 5 — Using the App
+
+### Dashboard Tab
+- Shows your live burnout score from the last analysis
+- Quick Analyze = uses device data + default questionnaire values
+- Full Check-In = complete questionnaire for accurate results
+
+### Check-In Tab
+- Fill in sleep, mood, stress, deadlines, etc.
+- Tap **Submit & Analyze** to send to backend and get prediction
+
+### Activity Tab
+- Shows today's app usage breakdown
+- Step counter and physical activity level
+- Top study vs entertainment apps
+
+### Settings Tab
+- Update backend IP if your PC's IP changes
+- View connection status
+
+---
+
+## Permissions Required
+
+| Permission | Why |
+|---|---|
+| `PACKAGE_USAGE_STATS` | Track which apps you use (study vs entertainment) |
+| `ACTIVITY_RECOGNITION` | Step counter for physical activity |
+| `INTERNET` | Send data to backend |
+| `POST_NOTIFICATIONS` | Burnout alerts when risk is high |
+
+> App Usage Stats requires **manual grant** in Android Settings → Apps → Special App Access → Usage Access
+
+---
+
+## Troubleshooting
+
+**"Cannot reach backend"**
+- Make sure START_BACKEND.bat is running on PC
+- Check both phone and PC are on the same WiFi network
+- Verify IP address in Settings tab
+- Try ping from phone browser: `http://YOUR_IP:8000/health`
+
+**"No app usage data"**
+- Grant Usage Access permission: Settings tab → Grant Permission
+
+**App shows 0 steps**
+- Some phones need a few minutes to start counting
+- Check if ACTIVITY_RECOGNITION permission is granted
+
+---
+
+## Project Structure
+
+```
+android/
+├── app/
+│   ├── src/main/
+│   │   ├── AndroidManifest.xml
+│   │   ├── java/com/burnout/detection/
+│   │   │   ├── MainActivity.kt          ← Main screen with bottom nav
+│   │   │   ├── SetupActivity.kt         ← First-time IP setup
+│   │   │   ├── collectors/
+│   │   │   │   ├── AppUsageCollector.kt ← Reads app usage from Android
+│   │   │   │   └── ActivityCollector.kt ← Reads step counter sensor
+│   │   │   ├── fragments/
+│   │   │   │   ├── DashboardFragment.kt ← Home screen
+│   │   │   │   ├── QuestionnaireFragment.kt ← Daily check-in
+│   │   │   │   ├── ActivityFragment.kt  ← Activity & usage view
+│   │   │   │   └── SettingsFragment.kt  ← Backend IP settings
+│   │   │   ├── models/Models.kt         ← Data classes
+│   │   │   ├── network/ApiClient.kt     ← Retrofit HTTP client
+│   │   │   ├── storage/PrefsManager.kt  ← Local data storage
+│   │   │   └── viewmodel/MainViewModel.kt ← Business logic
+│   │   └── res/
+│   │       ├── layout/                  ← All XML layouts
+│   │       ├── values/                  ← Colors, strings, themes
+│   │       ├── navigation/nav_graph.xml ← Screen navigation
+│   │       └── menu/bottom_nav_menu.xml ← Bottom nav items
+│   └── build.gradle
+└── build.gradle
+```

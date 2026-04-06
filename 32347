@@ -1,0 +1,37 @@
+@echo off
+echo ================================================
+echo   AI Burnout Detection System - Backend Setup
+echo ================================================
+cd /d "%~dp0backend"
+
+echo.
+echo [1/3] Installing Python packages...
+python -m pip install --upgrade pip
+python -m pip install scikit-learn fastapi uvicorn pandas numpy pydantic python-multipart
+if %errorlevel% neq 0 (
+    echo ERROR: pip install failed. Make sure Python is installed.
+    pause
+    exit /b 1
+)
+
+echo.
+echo [2/3] Training ML models on your machine...
+echo       This takes about 30-60 seconds, please wait...
+echo.
+python train_burnout_model.py
+if %errorlevel% neq 0 (
+    echo ERROR: Model training failed.
+    pause
+    exit /b 1
+)
+
+echo.
+echo [3/3] Starting FastAPI server...
+echo.
+echo   Backend  --^>  http://localhost:8000
+echo   API Docs --^>  http://localhost:8000/docs
+echo.
+echo   Keep this window open. Press Ctrl+C to stop.
+echo.
+python -m uvicorn api:app --reload --host 0.0.0.0 --port 8000
+pause
